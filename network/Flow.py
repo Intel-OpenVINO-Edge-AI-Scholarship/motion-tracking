@@ -105,7 +105,7 @@ class Flow(nn.Module):
         height = self.world.pose.height
         width = self.world.pose.width
         pixel = np.meshgrid(np.arange(0,height), np.arange(0,width))
-        hsv = torch.empty((height,width,3)).double()
+        hsv = torch.zeros((height,width,3)).double()
         v = torch.norm(flow, dim=2).double()
         idxs = np.where(v.detach().numpy().astype(np.float64) < 1e-8)
         hsv[idxs[0],idxs[1],0:3] = 0.0
@@ -116,12 +116,11 @@ class Flow(nn.Module):
         if np.sum((theta < 0) | (theta > 2*np.pi)) > 0:
             raise Exception("Invalid value for theta")
 
-        tensor = torch.cat((v[idxs].flatten().unsqueeze(1) * magnitude_scale, \
-            torch.ones(v[idxs].flatten().shape[0], dtype=torch.float64).unsqueeze(1)),dim=1)
-        tensor, _ = torch.min(torch.DoubleTensor(tensor), dim=1)
-        hsv[idxs[0],idxs[1],0] = torch.from_numpy(theta) / (2*np.pi)
-        hsv[idxs[0],idxs[1],1] = 1.0
-        hsv[idxs[0],idxs[1],2] = torch.DoubleTensor(tensor)
+        values = v[idxs].flatten().unsqueeze(1).double() * magnitude_scale
+        values[values > 1] = 1.0
+        # hsv[idxs[0],idxs[1],0] = torch.from_numpy(theta) / (2*np.pi)
+        # hsv[idxs[0],idxs[1],1] = 1.0
+        # hsv[idxs[0],idxs[1],2] = values
         return hsv
 
     def hsv_to_rgb(self, hsv):
@@ -196,6 +195,7 @@ class Flow(nn.Module):
         b[idx] = v[idx]
 
         rgb = torch.cat([r.unsqueeze(2), g.unsqueeze(2), b.unsqueeze(2)],dim=2)
+        # rgb = np.concatenate([np.expand_dims(r,2), np.expand_dims(g,2), np.expand_dims(b,2)],axis=2)
 
         return rgb.reshape(in_shape)
     
@@ -220,9 +220,9 @@ class Flow(nn.Module):
 
         # Write out hsv optical flow image.  We use the matplotlib hsv colour wheel
         hsv = self.flow_to_hsv_image(optical_flow_derivatives)
-        rgb = self.hsv_to_rgb(hsv)
+        # rgb = self.hsv_to_rgb(hsv)
 
-        return rgb, optical_flow_derivatives
+        return hsv, optical_flow_derivatives
 
     def forward(self, depth_map, detection):
 
