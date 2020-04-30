@@ -1,0 +1,12 @@
+Conversion Issues
+-----------------
+
+ATen operator
+NonZero operator
+
+While assignment of values to a torch tensor, ATen and NonZero got truggered due to each other.
+
+This was not valid from conversion to OpenVINO XML model.
+
+torch.cat / Broadcast was used to create the tensor.
+

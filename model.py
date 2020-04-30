@@ -39,7 +39,7 @@ def save_onnx_flow(world, filename="optical_flow.onnx"):
 
     image = np.random.random((240,320,3))
 
-    detection = torch.randn(1,1,100,7) # 1x1x100x7
+    detection = torch.from_numpy(np.vstack([(1,1,1,10,20,100,300)]*100).reshape(1,1,100,7)) # 1x1x100x7
 
     def load_depth_map_in_m(img, width=320, height=240, factor=0.001):
         img = cv2.cvtColor((np.abs(img)/np.abs(img).max()*255).astype(np.uint8), cv2.COLOR_BGR2GRAY)
@@ -47,6 +47,8 @@ def save_onnx_flow(world, filename="optical_flow.onnx"):
         return torch.from_numpy(img * factor).view(1,1,height,width)
 
     depth_map = load_depth_map_in_m(image)
+
+    depth_map[depth_map == 0.0] = 1000.0
 
     flow_model = Flow(world)
     d = flow_model(depth_map, detection)

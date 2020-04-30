@@ -10,20 +10,16 @@ class World():
         self.pose = pose
     
     def world_to_camera_with_pose(self, view_pose):
-        lookat_pose = torch.from_numpy(self.pose.position_to_tensor({'x': view_pose.lookat.x, 'y': view_pose.lookat.y, 'z': view_pose.lookat.z}))
-        camera_pose = torch.from_numpy(self.pose.position_to_tensor({'x': view_pose.camera.x, 'y': view_pose.camera.y, 'z': view_pose.camera.z}))
-        up = torch.DoubleTensor([0,1,0])
-        R = torch.eye(4).double()
-        R[2,:3] = normalize_norm(lookat_pose - camera_pose)
-        cross_P = torch.zeros(3).double()
-        cross_P = crossProduct(R[2,:3], up, cross_P)
-        R[0,:3] = normalize_norm(cross_P)
-        cross_P = torch.zeros(3).double()
-        cross_P = crossProduct(R[0,:3], R[2,:3], cross_P)
-        R[1,:3] = -normalize_norm(cross_P)
-        T = torch.eye(4).double()
+        lookat_pose = self.pose.position_to_tensor({'x': view_pose["lookat"]["x"], 'y': view_pose["lookat"]["y"], 'z': view_pose["lookat"]["z"]})
+        camera_pose = self.pose.position_to_tensor({'x': view_pose["camera"]["x"], 'y': view_pose["camera"]["y"], 'z': view_pose["camera"]["z"]})
+        up = np.array([0,1,0])
+        R = np.diag(np.ones(4))
+        R[2,:3] = normalize_norm_np(lookat_pose - camera_pose)
+        R[0,:3] = normalize_norm_np(np.cross(R[2,:3],up))
+        R[1,:3] = -normalize_norm_np(np.cross(R[0,:3],R[2,:3]))
+        T = np.diag(np.ones(4))
         T[:3,3] = -camera_pose
-        return torch.matmul(R,T)
+        return R.dot(T)
 
     def camera_point_to_uv_pixel_location(self, point, vfov=45, hfov=60):
         point = point / point[2]
@@ -32,11 +28,12 @@ class World():
         return (u,v)
 
     def camera_to_world_with_pose(self, view_pose):
-        return torch.from_numpy(np.linalg.inv(self.world_to_camera_with_pose(view_pose).detach().numpy().astype(np.float64)))
+        return torch.from_numpy(np.linalg.inv(self.world_to_camera_with_pose(view_pose)))
 
     def points_in_camera_coords(self, depth_map, pixel_to_ray_array):
-        assert pixel_to_ray_array.shape[2] == 3
-        camera_relative_xyz = torch.ones((depth_map.shape[2],depth_map.shape[3],4))
-        for i in range(3):
-            camera_relative_xyz[:,:,i] = depth_map[0,0,:,:] * pixel_to_ray_array[:,:,i]
-        return camera_relative_xyz
+        # camera_relative_xyz = torch.ones((depth_map.shape[2],depth_map.shape[3],4))
+        camera_relative_xyz = depth_map[0].permute(1,2,0) * pixel_to_ray_array
+        return torch.cat([camera_relative_xyz.double(),torch.ones(240,320,1).double()], dim=2)
+        # for i in range(3):
+        #     camera_relative_xyz[:,:,i] = depth_map[0,0,:,:] * pixel_to_ray_array[:,:,i]
+        # return camera_relative_xyz

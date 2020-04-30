@@ -1,5 +1,6 @@
 import torch
 import pandas as pd
+import numpy as np
 
 def normalize(v):
     return v/torch.norm(v, dim=2).unsqueeze(2)
@@ -7,12 +8,15 @@ def normalize(v):
 def normalize_norm(v):
     return v/torch.norm(v)
 
+def normalize_norm_np(v):
+    return v/np.linalg.norm(v)
+
 def flatten_points(points):
-    return points.reshape(-1, 4)
+    return points.view(-1, 4)
 
 def reshape_points(height, width, points):
     other_dim = points.shape[1]
-    return points.reshape(height,width,other_dim)
+    return points.view(height,width,other_dim)
 
 def transform_points(transform, points):
     assert points.shape[2] == 4
@@ -35,7 +39,7 @@ def convert_view_to_df(view, columns=['shutter_open.camera.x', 'shutter_open.cam
        'shutter_close.lookat.x', 'shutter_close.lookat.y',
        'shutter_close.lookat.z', 'shutter_close.timestamp']):
     
-    return pd.DataFrame(view, columns=columns)
+    return pd.DataFrame(view.values.reshape(1,-1), columns=columns)
 
 def build_shutter_open_view(view):
     return {
