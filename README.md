@@ -11,3 +11,8 @@ Parameters:
 - Measurement of Distance of Person from Camera
 - A MaxMin Selection of A Single Non-Oscillating point
 
+## Commands executed
+
+python convert.py "models/optical_flow.onnx"
+
+/usr/bin/python3.6 /opt/intel/openvino/deployment_tools/model_optimizer/mo_onnx.py --input_model models/optical_flow.onnx --log_level=DEBUG --input_shape "[1,1,240,320]" --output_dir models/

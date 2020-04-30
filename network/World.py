@@ -31,9 +31,5 @@ class World():
         return torch.from_numpy(np.linalg.inv(self.world_to_camera_with_pose(view_pose)))
 
     def points_in_camera_coords(self, depth_map, pixel_to_ray_array):
-        # camera_relative_xyz = torch.ones((depth_map.shape[2],depth_map.shape[3],4))
         camera_relative_xyz = depth_map[0].permute(1,2,0) * pixel_to_ray_array
         return torch.cat([camera_relative_xyz.double(),torch.ones(240,320,1).double()], dim=2)
-        # for i in range(3):
-        #     camera_relative_xyz[:,:,i] = depth_map[0,0,:,:] * pixel_to_ray_array[:,:,i]
-        # return camera_relative_xyz

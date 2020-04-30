@@ -123,8 +123,10 @@ class Flow(nn.Module):
         dT_dalpha[:3,3] = dt3_dalpha
 
         # Calculate 3D point derivative alpha derivative
-        dpoint_dalpha = torch.matmul(torch.from_numpy(dT_dalpha).double(), points.t().double())
-        point_in_camera_coords = torch.matmul(torch.from_numpy(wTc).double(), points.t().double())
+        
+        # error in matmul operation
+        dpoint_dalpha = torch.matmul(points.t().double(), torch.from_numpy(dT_dalpha).double()).t()
+        point_in_camera_coords = torch.matmul(points.t().double(), torch.from_numpy(wTc).double()).t()
 
         # Calculate pixel location alpha derivative
         du_dalpha = uk * (dpoint_dalpha[0] * point_in_camera_coords[2] - dpoint_dalpha[2] * point_in_camera_coords[0])
@@ -249,7 +251,8 @@ class Flow(nn.Module):
         ground_truth_pose = self.world.pose.interpolate_poses(build_shutter_open_view(view),build_shutter_close_view(view),0.5)
         camera_to_world_matrix = self.world.camera_to_world_with_pose(ground_truth_pose)
 
-        points_in_world = (torch.matmul(points_in_camera.view(-1,4).double(), camera_to_world_matrix.double())).reshape(-1,4)
+        # error in matmul
+        points_in_world = (torch.matmul(points_in_camera.view(-1,4).double(), camera_to_world_matrix.double())).t()
 
         optical_flow_derivatives = self.optical_flow(points_in_world,build_shutter_open_view(view),build_shutter_close_view(view))
         optical_flow_derivatives = optical_flow_derivatives.view(self.world.pose.height,self.world.pose.width,2)

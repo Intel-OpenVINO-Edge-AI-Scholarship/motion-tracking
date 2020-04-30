@@ -10,3 +10,9 @@ This was not valid from conversion to OpenVINO XML model.
 
 torch.cat / Broadcast was used to create the tensor.
 
+MatMul operator
+
+While doing matmul of 4,4 and 4,-1 shapes, the operations were rejected by openvino ie 
+
+This was not valid due to input graph on points being constant
+
